@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "resumematchpro_core"
-version = "0.1.0"
 description = "Core functionality for ResumeMatchPro"
 readme = "README.md"
 requires-python = ">=3.11"
+dynamic = ["version"]
 license = "CC-BY-NC-4.0"
 authors = [
     {name = "Pavel Pokrovskii"}
@@ -40,6 +40,7 @@ packages = ["resumematchpro_core"]
 write_to = "_version.py"
 version_scheme = "post-release"
 local_scheme = "node-and-date"
+fallback_version = "0.0.0"
 
 [tool.mypy]
 python_version = "3.11"
