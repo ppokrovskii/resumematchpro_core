@@ -1,9 +1,8 @@
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 from azure.cosmos import DatabaseProxy
@@ -24,31 +23,52 @@ load_dotenv(Path(__file__).parent / ".env.test")
 sys.path.append(str(Path(__file__).parent.parent))
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture  # type: ignore[misc]
 def repository(cosmos_client: DatabaseProxy) -> JobDescriptionRepository:
-    # Use the session-scoped cosmos_client
+    """Create a JobDescriptionRepository instance for testing.
+
+    Args:
+        cosmos_client: The Cosmos DB client fixture.
+
+    Returns:
+        JobDescriptionRepository: A repository instance for testing.
+    """
     return JobDescriptionRepository(cosmos_client)
 
 
-# add pytest fixture to delete all items from the container before each test
-@pytest.fixture(scope="function", autouse=True)
+@pytest.fixture(autouse=True)  # type: ignore[misc]
 def run_around_tests(repository: JobDescriptionRepository) -> None:
+    """Delete all items from the container before each test.
+
+    Args:
+        repository: The repository fixture.
+    """
     repository.delete_all()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture  # type: ignore[misc]
 def sample_job_description() -> JobDescriptionDb:
-    """Fixture that provides a sample job description for testing."""
+    """Create a sample job description for testing.
+
+    Returns:
+        JobDescriptionDb: A sample job description model.
+    """
     return JobDescriptionDb(
-        id="123e4567-e89b-12d3-a456-426614174000",
+        id=str(uuid4()),
         user_id="test-user-id",
         title="Software Engineer",
         company="Test Company",
+        location=None,
         description="Test job description",
         requirements=["Python", "Azure"],
         skills=["Python", "Azure", "Cloud"],
+        experience_level=None,
+        salary_range=None,
+        employment_type=None,
         created_at="2024-01-01T00:00:00",
         updated_at="2024-01-01T00:00:00",
+        is_active=True,
+        metadata=None,
     )
 
 

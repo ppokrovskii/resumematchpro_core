@@ -34,7 +34,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["repositories", "shared"]
+packages = ["resumematchpro_core"]
 
 [tool.setuptools_scm]
 write_to = "_version.py"
@@ -54,7 +54,7 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
-files = ["repositories", "shared", "tests"]
+files = ["resumematchpro_core", "tests"]
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]
@@ -74,7 +74,7 @@ select = ["E", "F", "I", "N", "W", "B", "UP", "PL", "RUF"]
 ignore = []
 
 [tool.ruff.isort]
-known-first-party = ["repositories", "shared"]
+known-first-party = ["resumematchpro_core"]
 
 [dependency-groups]
 dev = [
