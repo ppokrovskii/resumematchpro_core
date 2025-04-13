@@ -10,9 +10,10 @@ on:
   workflow_dispatch:  # Allow manual triggering
 
 jobs:
-  verify:
-    name: Verify Package
+  publish:
+    name: Build and Publish Package
     runs-on: ubuntu-latest
+    environment: prod
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,36 +28,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install build twine setuptools_scm wheel
-          pip install -e .
-
-      - name: Verify package builds
-        run: python -m build --sdist --wheel .
-
-      - name: Run twine check
-        run: twine check dist/*
-
-  build-and-publish:
-    name: Build and Publish Package
-    needs: verify
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    environment: prod
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install build dependencies
-        run: |
-          python -m pip install --upgrade pip
           pip install build twine setuptools_scm wheel artifacts-keyring
+          pip install -e .
 
       - name: Determine version
         id: version
@@ -64,26 +37,31 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Using version: $VERSION"
 
-      - name: Build package
+      - name: Build and verify package
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION: ${{ env.VERSION }}
-        run: python -m build --sdist --wheel .
-
-      - name: Run twine check
-        run: twine check dist/*
+        run: |
+          echo "Building package with version: $SETUPTOOLS_SCM_PRETEND_VERSION"
+          python -m build --sdist --wheel .
+          twine check dist/*
 
       - name: Publish to Azure Artifacts
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         env:
           AZURE_DEVOPS_PAT: ${{ secrets.AZURE_DEVOPS_PAT }}
         run: |
-          # Configure pip for Azure Artifacts
+          # Configure pip and twine for Azure Artifacts
           python -m pip config set global.extra-index-url https://pkgs.dev.azure.com/resumematchpro/_packaging/resumematchpro/pypi/simple/
-
-          # Configure twine for Azure Artifacts
           export TWINE_USERNAME=azure
           export TWINE_PASSWORD=${AZURE_DEVOPS_PAT}
           export TWINE_REPOSITORY_URL=https://pkgs.dev.azure.com/resumematchpro/_packaging/resumematchpro/pypi/upload
 
-          # Publish the package
-          python -m twine upload --repository-url ${TWINE_REPOSITORY_URL} dist/*
+          # Debug information
+          echo "Package files to upload:"
+          ls -la dist/
+          echo "Repository URL: $TWINE_REPOSITORY_URL"
+
+          # Publish the package with verbose output
+          python -m twine upload --verbose --repository-url ${TWINE_REPOSITORY_URL} dist/*
